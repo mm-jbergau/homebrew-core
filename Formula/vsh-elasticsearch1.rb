@@ -11,7 +11,7 @@ class VshElasticsearch1 < Formula
     sha256 catalina: "436898929de1bebdc5a910454f7b411cafd9e926f98b1c96ffa49b79bd83570f"
   end
 
-  depends_on "openjdk@8"
+  depends_on "openjdk"
 
   def cluster_name
     "elasticsearch_#{ENV["USER"]}"
