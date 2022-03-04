@@ -454,6 +454,7 @@ class PhpAT56 < Formula
       </dict>
     </plist>
   EOS
+  end
 
   test do
     assert_match(/^Zend OPcache$/, shell_output("#{bin}/php -i"),
