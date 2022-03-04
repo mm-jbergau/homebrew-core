@@ -143,6 +143,7 @@ class VshPhp56 < Formula
 
     ENV["EXTENSION_DIR"] = "#{prefix}/lib/#{name}/20131226"
     ENV["PHP_PEAR_PHP_BIN"] = "#{bin}/php#{bin_suffix}"
+    ENV["PKG_CONFIG_PATH"] = "/opt/homebrew/bin"
 
     args = %W[
       --prefix=#{prefix}
@@ -244,7 +245,6 @@ class VshPhp56 < Formula
     }
 
     resource("imagick_module").stage {
-      system "export " "PKG_CONFIG_PATH=/opt/homebrew/bin"
       system "#{bin}/phpize#{bin_suffix}"
       system "./configure", "--with-php-config=#{bin}/php-config#{bin_suffix}"
       system "make", "clean"
