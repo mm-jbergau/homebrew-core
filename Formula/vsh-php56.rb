@@ -63,21 +63,6 @@ class VshPhp56 < Formula
     patch :DATA
   end
 
-  resource "xdebug_module" do
-    url "https://github.com/xdebug/xdebug/archive/XDEBUG_2_5_5.tar.gz"
-    sha256 "77faf3bc49ca85d9b67ae2aa9d9cc4b017544f2566e918bf90fe23d68e044244"
-  end
-#
-#   resource "imagick_module" do
-#     url "https://github.com/Imagick/imagick/archive/3.4.4.tar.gz"
-#     sha256 "8204d228ecbe5f744d625c90364808616127471581227415bca18857af981369"
-#   end
-
-#   resource "geoip_module" do
-#     url "https://github.com/valet-sh/php-geoip/releases/download/1.1.1/geoip-1.1.1.tar.gz"
-#     sha256 "33280eb74a4ea4cbc1a3867f8fd0f633f9de2d19043d4825bf57863d0c5e20e7"
-#   end
-
   def install
     if OS.mac? && (MacOS.version == :el_capitan || MacOS.version == :sierra)
       # Ensure that libxml2 will be detected correctly in older MacOS
@@ -140,9 +125,6 @@ class VshPhp56 < Formula
     # sdk path or it won't find the headers
     headers_path = ""
     headers_path = "=#{MacOS.sdk_path_if_needed}/usr" if OS.mac?
-
-    ENV["EXTENSION_DIR"] = "#{prefix}/lib/#{name}/20131226"
-    ENV["PHP_PEAR_PHP_BIN"] = "#{bin}/php#{bin_suffix}"
 
     args = %W[
       --prefix=#{prefix}
@@ -234,30 +216,6 @@ class VshPhp56 < Formula
     system "./configure", *args
     system "make"
     system "make", "install"
-
-    resource("xdebug_module").stage {
-      system "#{bin}/phpize#{bin_suffix}"
-      system "./configure", "--with-php-config=#{bin}/php-config#{bin_suffix}"
-      system "make", "clean"
-      system "make", "all"
-      system "make", "install"
-    }
-#
-#     resource("imagick_module").stage {
-#       system "#{bin}/phpize#{bin_suffix}"
-#       system "./configure", "--with-php-config=#{bin}/php-config#{bin_suffix}"
-#       system "make", "clean"
-#       system "make", "all"
-#       system "make", "install"
-#     }
-#
-#     resource("geoip_module").stage {
-#       system "#{bin}/phpize#{bin_suffix}"
-#       system "./configure", "--with-php-config=#{bin}/php-config#{bin_suffix}"
-#       system "make", "clean"
-#       system "make", "all"
-#       system "make", "install"
-#     }
 
     # Allow pecl to install outside of Cellar
     extension_dir = Utils.safe_popen_read("#{bin}/php-config", "--extension-dir").chomp
@@ -418,11 +376,6 @@ class VshPhp56 < Formula
 
   def bin_suffix
     "#{php_version}"
-  end
-
-  def php_ext_dir
-    extension_dir = Utils.popen_read("#{bin}/php-config#{bin_suffix} --extension-dir").chomp
-    File.basename(extension_dir)
   end
 
   plist_options manual: "php-fpm5.6"
