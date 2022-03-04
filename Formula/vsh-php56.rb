@@ -1,4 +1,4 @@
-class PhpAT56 < Formula
+class VshPhp56 < Formula
   desc "General-purpose scripting language"
   homepage "https://secure.php.net/"
   url "https://github.com/shivammathur/php-src-backports/archive/043fd2f267507f4b1a611c446b97d6d4324f6c23.tar.gz"
