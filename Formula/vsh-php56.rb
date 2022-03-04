@@ -8,12 +8,8 @@ class VshPhp56 < Formula
   revision 4
 
   bottle do
-    root_url "https://ghcr.io/v2/shivammathur/php"
-    rebuild 3
-    sha256 arm64_big_sur: "08ac6cd41a71754515cca5f11c19cbac7253607b17c1a869856e7f42da064e64"
-    sha256 big_sur:       "e7b9754da8040a5702b1ec53ca4b041bee604bace571b67083ce3cb5b62011ec"
-    sha256 catalina:      "7f7e446a2baaf227f9e6c99779210b61160652c894e4d8bcff84c6925e9830fb"
-    sha256 x86_64_linux:  "0888eeb3e653538e1a608a471a4e2eb53840e41de55d1b7bd440297efa6d91f0"
+    root_url "https://github.com/valet-sh/homebrew-core/releases/download/bottles"
+    sha256 catalina: "c4adf486c8c00c80ad208e356b98ed0decd3b44eb23aa459592787e4f047cb65"
   end
 
   keg_only :versioned_formula
