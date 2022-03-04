@@ -1,33 +1,17 @@
-class PhpAT56 < Formula
+class VshPhp56 < Formula
   desc "General-purpose scripting language"
   homepage "https://secure.php.net/"
-  url "https://github.com/shivammathur/php-src-backports/archive/043fd2f267507f4b1a611c446b97d6d4324f6c23.tar.gz"
-  version "5.6.40"
-  sha256 "b9744ec5afe7d7decaf58e84683d2af1a8684195c9ca8050ecc1c239f4fb19de"
+  url "https://php.net/get/php-5.6.40.tar.xz/from/this/mirror"
+  sha256 "1369a51eee3995d7fbd1c5342e5cc917760e276d561595b6052b21ace2656d1c"
   license "PHP-3.01"
-  revision 4
+  revision 181
 
   bottle do
-    root_url "https://ghcr.io/v2/shivammathur/php"
-    rebuild 3
-    sha256 arm64_big_sur: "08ac6cd41a71754515cca5f11c19cbac7253607b17c1a869856e7f42da064e64"
-    sha256 big_sur:       "e7b9754da8040a5702b1ec53ca4b041bee604bace571b67083ce3cb5b62011ec"
-    sha256 catalina:      "7f7e446a2baaf227f9e6c99779210b61160652c894e4d8bcff84c6925e9830fb"
-    sha256 x86_64_linux:  "0888eeb3e653538e1a608a471a4e2eb53840e41de55d1b7bd440297efa6d91f0"
+    root_url "https://github.com/valet-sh/homebrew-core/releases/download/bottles"
+    sha256 catalina: "c4adf486c8c00c80ad208e356b98ed0decd3b44eb23aa459592787e4f047cb65"
   end
 
-  keg_only :versioned_formula
-
-  # This PHP version is not supported upstream as of 2018-12-31.
-  # Although, this was built with back-ported security patches,
-  # we recommended to use a currently supported PHP version.
-  # For more details, refer to https://www.php.net/eol.php
-  deprecate! date: "2018-12-31", because: :deprecated_upstream
-
-  depends_on "bison" => :build
-  depends_on "httpd" => [:build, :test]
   depends_on "pkg-config" => :build
-  depends_on "re2c" => :build
   depends_on "apr"
   depends_on "apr-util"
   depends_on "aspell"
@@ -55,16 +39,13 @@ class PhpAT56 < Formula
   depends_on "imagemagick"
   depends_on "geoip"
 
-  uses_from_macos "bzip2"
-  uses_from_macos "libedit"
-  uses_from_macos "libxml2"
-  uses_from_macos "libxslt"
-  uses_from_macos "zlib"
+  # PHP build system incorrectly links system libraries
+  # see https://github.com/php/php-src/pull/3472
+  patch :DATA
 
-  on_macos do
-    # PHP build system incorrectly links system libraries
-    # see https://github.com/php/php-src/pull/3472
-    patch :DATA
+  patch do
+    url "https://raw.githubusercontent.com/valet-sh/homebrew-core/master/Patch/openssl.patch"
+    sha256 "c9715b544ae249c0e76136dfadd9d282237233459694b9e75d0e3e094ab0c993"
   end
 
   resource "xdebug_module" do
@@ -83,10 +64,8 @@ class PhpAT56 < Formula
   end
 
   def install
-    if OS.mac? && (MacOS.version == :el_capitan || MacOS.version == :sierra)
-      # Ensure that libxml2 will be detected correctly in older MacOS
-      ENV["SDKROOT"] = MacOS.sdk_path
-    end
+    # Ensure that libxml2 will be detected correctly in older MacOS
+    ENV["SDKROOT"] = MacOS.sdk_path if MacOS.version == :el_capitan || MacOS.version == :sierra
 
     # Work around configure issues with Xcode 12
     # See https://bugs.php.net/bug.php?id=80171
@@ -99,29 +78,6 @@ class PhpAT56 < Formula
     # buildconf required due to system library linking bug patch
     system "./buildconf", "--force"
 
-    inreplace "configure" do |s|
-      s.gsub! "APACHE_THREADED_MPM=`$APXS_HTTPD -V | grep 'threaded:.*yes'`",
-              "APACHE_THREADED_MPM="
-      s.gsub! "APXS_LIBEXECDIR='$(INSTALL_ROOT)'`$APXS -q LIBEXECDIR`",
-              "APXS_LIBEXECDIR='$(INSTALL_ROOT)#{lib}/httpd/modules'"
-      s.gsub! "-z `$APXS -q SYSCONFDIR`",
-              "-z ''"
-      # apxs will interpolate the @ in the versioned prefix: https://bz.apache.org/bugzilla/show_bug.cgi?id=61944
-      s.gsub! "LIBEXECDIR='$APXS_LIBEXECDIR'",
-              "LIBEXECDIR='" + "#{lib}/httpd/modules".gsub("@", "\\@") + "'"
-    end
-
-    # Update error message in apache sapi to better explain the requirements
-    # of using Apache http in combination with php if the non-compatible MPM
-    # has been selected. Homebrew has chosen not to support being able to
-    # compile a thread safe version of PHP and therefore it is not
-    # possible to recompile as suggested in the original message
-    inreplace "sapi/apache2handler/sapi_apache2.c",
-              "You need to recompile PHP.",
-              "Homebrew PHP does not support a thread-safe php binary. "\
-              "To use the PHP apache sapi please change "\
-              "your httpd config to use the prefork MPM"
-
     inreplace "sapi/fpm/php-fpm.conf.in", ";daemonize = yes", "daemonize = no"
 
     # API compatibility with tidy-html5 v5.0.0 - https://github.com/htacg/tidy-html5/issues/224
@@ -130,20 +86,18 @@ class PhpAT56 < Formula
     # Required due to icu4c dependency
     ENV.cxx11
 
-    # icu4c 61.1 compatability
     ENV.append "CPPFLAGS", "-DU_USING_ICU_NAMESPACE=1"
 
     config_path = etc/"#{name}"
     # Prevent system pear config from inhibiting pear install
     (config_path/"pear.conf").delete if (config_path/"pear.conf").exist?
 
-    # Prevent homebrew from harcoding path to sed shim in phpize script
+    # Prevent homebrew from hardcoding path to sed shim in phpize script
     ENV["lt_cv_path_SED"] = "sed"
 
     # Each extension that is built on Mojave needs a direct reference to the
     # sdk path or it won't find the headers
-    headers_path = ""
-    headers_path = "=#{MacOS.sdk_path_if_needed}/usr" if OS.mac?
+    headers_path = "=#{MacOS.sdk_path_if_needed}/usr"
 
     ENV["EXTENSION_DIR"] = "#{prefix}/lib/#{name}/20131226"
     ENV["PHP_PEAR_PHP_BIN"] = "#{bin}/php#{bin_suffix}"
@@ -152,6 +106,9 @@ class PhpAT56 < Formula
       --prefix=#{prefix}
       --localstatedir=#{var}
       --sysconfdir=#{config_path}
+      --libdir=#{prefix}/lib/#{name}
+      --includedir=#{prefix}/include/#{name}
+      --datadir=#{prefix}/share/#{name}
       --with-config-file-path=#{config_path}
       --with-config-file-scan-dir=#{config_path}/conf.d
       --program-suffix=#{bin_suffix}
@@ -166,9 +123,7 @@ class PhpAT56 < Formula
       --enable-mbregex
       --enable-mbstring
       --enable-mysqlnd
-      --enable-opcache
       --enable-pcntl
-      --enable-phpdbg
       --enable-shmop
       --enable-soap
       --enable-sockets
@@ -177,9 +132,8 @@ class PhpAT56 < Formula
       --enable-sysvshm
       --enable-wddx
       --enable-zip
-      --with-apxs2=#{Formula["httpd"].opt_bin}/apxs
       --with-bz2#{headers_path}
-      --with-curl=#{Formula["curl"].opt_prefix}
+      --with-curl=#{Formula["curl-openssl"].opt_prefix}
       --with-fpm-user=_www
       --with-fpm-group=_www
       --with-freetype-dir=#{Formula["freetype"].opt_prefix}
@@ -193,12 +147,15 @@ class PhpAT56 < Formula
       --with-layout=GNU
       --with-ldap=#{Formula["openldap"].opt_prefix}
       --with-ldap-sasl#{headers_path}
+      --with-libedit#{headers_path}
+      --with-libxml-dir#{headers_path}
       --with-libzip
       --with-mcrypt=#{Formula["mcrypt"].opt_prefix}
       --with-mhash#{headers_path}
       --with-mysql-sock=/tmp/mysql.sock
       --with-mysqli=mysqlnd
       --with-mysql=mysqlnd
+      --with-ndbm#{headers_path}
       --with-openssl=#{Formula["openssl@1.1"].opt_prefix}
       --with-pdo-dblib=#{Formula["freetds"].opt_prefix}
       --with-pdo-mysql=mysqlnd
@@ -213,27 +170,9 @@ class PhpAT56 < Formula
       --with-tidy=#{Formula["tidy-html5"].opt_prefix}
       --with-unixODBC=#{Formula["unixodbc"].opt_prefix}
       --with-xmlrpc
+      --with-xsl#{headers_path}
+      --with-zlib#{headers_path}
     ]
-
-    if OS.mac?
-      args << "--with-bz2#{headers_path}"
-      args << "--with-libedit#{headers_path}"
-      args << "--with-libxml-dir#{headers_path}"
-      args << "--with-ndbm#{headers_path}"
-      args << "--with-xsl#{headers_path}"
-      args << "--with-zlib#{headers_path}"
-    end
-
-    if OS.linux?
-      args << "--with-zlib=#{Formula["zlib"].opt_prefix}"
-      args << "--with-bzip2=#{Formula["bzip2"].opt_prefix}"
-      args << "--with-libedit=#{Formula["libedit"].opt_prefix}"
-      args << "--with-libxml-dir=#{Formula["libxml2"].opt_prefix}"
-      args << "--with-xsl=#{Formula["libxslt"].opt_prefix}"
-      args << "--without-ldap-sasl"
-      args << "--without-ndbm"
-      args << "--without-gdbm"
-    end
 
     system "./configure", *args
     system "make"
@@ -263,23 +202,12 @@ class PhpAT56 < Formula
       system "make", "install"
     }
 
-    # Allow pecl to install outside of Cellar
-    extension_dir = Utils.safe_popen_read("#{bin}/php-config", "--extension-dir").chomp
-    orig_ext_dir = File.basename(extension_dir)
-    inreplace bin/"php-config", lib/"php", prefix/"pecl"
-    %w[development production].each do |mode|
-      inreplace "php.ini-#{mode}", %r{; ?extension_dir = "\./"},
-        "extension_dir = \"#{HOMEBREW_PREFIX}/lib/php/pecl/#{orig_ext_dir}\""
-    end
-
-    # Use OpenSSL cert bundle
+   # Use OpenSSL cert bundle
     openssl = Formula["openssl@1.1"]
-    %w[development production].each do |mode|
-      inreplace "php.ini-#{mode}", /; ?openssl\.cafile=/,
-        "openssl.cafile = \"#{openssl.pkgetc}/cert.pem\""
-      inreplace "php.ini-#{mode}", /; ?openssl\.capath=/,
-        "openssl.capath = \"#{openssl.pkgetc}/certs\""
-    end
+    inreplace "php.ini-development", /; ?openssl\.cafile=/,
+      "openssl.cafile = \"#{openssl.pkgetc}/cert.pem\""
+    inreplace "php.ini-development", /; ?openssl\.capath=/,
+      "openssl.capath = \"#{openssl.pkgetc}/certs\""
 
     inreplace "sapi/fpm/php-fpm.conf" do |s|
       s.gsub!(/listen =.*/, "listen = /tmp/#{name}.sock")
@@ -287,8 +215,7 @@ class PhpAT56 < Formula
 
     config_files = {
       "php.ini-development"   => "php.ini",
-      "php.ini-production"    => "php.ini-production",
-      "sapi/fpm/php-fpm.conf" => "php-fpm.conf",
+      "sapi/fpm/php-fpm.conf" => "php-fpm.conf"
     }
     config_files.each_value do |dst|
       dst_default = config_path/"#{dst}.default"
@@ -353,28 +280,8 @@ class PhpAT56 < Formula
 
     chmod 0644, pear_files
 
-    # Custom location for extensions installed via pecl
-    pecl_path = HOMEBREW_PREFIX/"lib/php/pecl"
-    ln_s pecl_path, prefix/"pecl" unless (prefix/"pecl").exist?
-    extension_dir = Utils.safe_popen_read("#{bin}/php-config", "--extension-dir").chomp
-    php_basename = File.basename(extension_dir)
-    php_ext_dir = opt_prefix/"lib/php"/php_basename
-
-    # fix pear config to install outside cellar
-    pear_path = HOMEBREW_PREFIX/"share/pear@#{php_version}"
-    cp_r pkgshare/"pear/.", pear_path
     {
-      "php_ini"  => etc/"#{name}/php.ini",
-      "php_dir"  => pear_path,
-      "doc_dir"  => pear_path/"doc",
-      "ext_dir"  => pecl_path/php_basename,
-      "bin_dir"  => opt_bin,
-      "data_dir" => pear_path/"data",
-      "cfg_dir"  => pear_path/"cfg",
-      "www_dir"  => pear_path/"htdocs",
-      "man_dir"  => HOMEBREW_PREFIX/"share/man",
-      "test_dir" => pear_path/"test",
-      "php_bin"  => opt_bin/"php",
+      "php_ini"  => etc/"#{name}/php.ini"
     }.each do |key, value|
       value.mkpath if /(?<!bin|man)_dir$/.match?(key)
       system bin/"pear#{bin_suffix}", "config-set", key, value, "system"
@@ -385,35 +292,18 @@ class PhpAT56 < Formula
     %w[
       opcache
     ].each do |e|
-      ext_config_path = etc/"php/#{php_version}/conf.d/ext-#{e}.ini"
+      ext_config_path = etc/"#{name}/conf.d/ext-#{e}.ini"
       extension_type = (e == "opcache") ? "zend_extension" : "extension"
       if ext_config_path.exist?
         inreplace ext_config_path,
-          /#{extension_type}=.*$/, "#{extension_type}=#{php_ext_dir}/#{e}.so"
+          /#{extension_type}=.*$/, "#{extension_type}=#{e}.so"
       else
         ext_config_path.write <<~EOS
           [#{e}]
-          #{extension_type}="#{php_ext_dir}/#{e}.so"
+          #{extension_type}="#{e}.so"
         EOS
       end
     end
-  end
-
-  def caveats
-    <<~EOS
-      To enable PHP in Apache add the following to httpd.conf and restart Apache:
-          LoadModule php5_module #{opt_lib}/httpd/modules/libphp5.so
-
-          <FilesMatch \\.php$>
-              SetHandler application/x-httpd-php
-          </FilesMatch>
-
-      Finally, check DirectoryIndex includes index.php
-          DirectoryIndex index.php index.html
-
-      The php.ini and php-fpm.ini file can be found in:
-          #{etc}/php/#{php_version}/
-    EOS
   end
 
   def php_version
@@ -429,7 +319,7 @@ class PhpAT56 < Formula
     File.basename(extension_dir)
   end
 
-  plist_options manual: "php-fpm5.6"
+  plist_options :manual => "php-fpm5.6"
 
   def plist; <<~EOS
     <?xml version="1.0" encoding="UTF-8"?>
@@ -454,23 +344,21 @@ class PhpAT56 < Formula
       </dict>
     </plist>
   EOS
+  end
 
   test do
-    assert_match(/^Zend OPcache$/, shell_output("#{bin}/php -i"),
-      "Zend OPCache extension not loaded")
+    assert_match /^Zend OPcache$/, shell_output("#{bin}/php -i"),
+      "Zend OPCache extension not loaded"
     # Test related to libxml2 and
     # https://github.com/Homebrew/homebrew-core/issues/28398
-    on_macos do
-      assert_includes MachO::Tools.dylibs("#{bin}/php"),
-        "#{Formula["libpq"].opt_lib}/libpq.5.dylib"
-    end
-
+    assert_includes MachO::Tools.dylibs("#{bin}/php"),
+      "#{Formula["libpq"].opt_lib}/libpq.5.dylib"
     system "#{sbin}/php-fpm#{bin_suffix}", "-t"
     system "#{bin}/phpdbg#{bin_suffix}", "-V"
     system "#{bin}/php-cgi#{bin_suffix}", "-m"
     # Prevent SNMP extension to be added
-    refute_match(/^snmp$/, shell_output("#{bin}/php -m"),
-      "SNMP extension doesn't work reliably with Homebrew on High Sierra")
+    assert_no_match /^snmp$/, shell_output("#{bin}/php -m"),
+      "SNMP extension doesn't work reliably with Homebrew on High Sierra"
     begin
       require "socket"
 
