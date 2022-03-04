@@ -67,11 +67,11 @@ class VshPhp56 < Formula
     url "https://github.com/xdebug/xdebug/archive/XDEBUG_2_5_5.tar.gz"
     sha256 "77faf3bc49ca85d9b67ae2aa9d9cc4b017544f2566e918bf90fe23d68e044244"
   end
-
-  resource "imagick_module" do
-    url "https://github.com/Imagick/imagick/archive/3.4.4.tar.gz"
-    sha256 "8204d228ecbe5f744d625c90364808616127471581227415bca18857af981369"
-  end
+#
+#   resource "imagick_module" do
+#     url "https://github.com/Imagick/imagick/archive/3.4.4.tar.gz"
+#     sha256 "8204d228ecbe5f744d625c90364808616127471581227415bca18857af981369"
+#   end
 
   resource "geoip_module" do
     url "https://github.com/valet-sh/php-geoip/releases/download/1.1.1/geoip-1.1.1.tar.gz"
@@ -143,7 +143,6 @@ class VshPhp56 < Formula
 
     ENV["EXTENSION_DIR"] = "#{prefix}/lib/#{name}/20131226"
     ENV["PHP_PEAR_PHP_BIN"] = "#{bin}/php#{bin_suffix}"
-    ENV["PKG_CONFIG_PATH"] = "/opt/homebrew/bin"
 
     args = %W[
       --prefix=#{prefix}
@@ -243,14 +242,14 @@ class VshPhp56 < Formula
       system "make", "all"
       system "make", "install"
     }
-
-    resource("imagick_module").stage {
-      system "#{bin}/phpize#{bin_suffix}"
-      system "./configure", "--with-php-config=#{bin}/php-config#{bin_suffix}"
-      system "make", "clean"
-      system "make", "all"
-      system "make", "install"
-    }
+#
+#     resource("imagick_module").stage {
+#       system "#{bin}/phpize#{bin_suffix}"
+#       system "./configure", "--with-php-config=#{bin}/php-config#{bin_suffix}"
+#       system "make", "clean"
+#       system "make", "all"
+#       system "make", "install"
+#     }
 
     resource("geoip_module").stage {
       system "#{bin}/phpize#{bin_suffix}"
