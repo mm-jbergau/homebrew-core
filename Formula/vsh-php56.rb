@@ -244,6 +244,7 @@ class VshPhp56 < Formula
     }
 
     resource("imagick_module").stage {
+      system "export" "PKG_CONFIG_PATH=/opt/homebrew/bin"
       system "#{bin}/phpize#{bin_suffix}"
       system "./configure", "--with-php-config=#{bin}/php-config#{bin_suffix}"
       system "make", "clean"
