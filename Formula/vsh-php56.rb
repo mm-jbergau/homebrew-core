@@ -125,7 +125,8 @@ class VshPhp56 < Formula
     # sdk path or it won't find the headers
     headers_path = ""
     headers_path = "=#{MacOS.sdk_path_if_needed}/usr" if OS.mac?
-
+    ENV["EXTENSION_DIR"] = "#{prefix}/lib/#{name}/20131226"
+    ENV["PHP_PEAR_PHP_BIN"] = "#{bin}/php#{bin_suffix}"
     args = %W[
       --prefix=#{prefix}
       --localstatedir=#{var}
