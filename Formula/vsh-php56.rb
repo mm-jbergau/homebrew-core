@@ -73,10 +73,10 @@ class VshPhp56 < Formula
 #     sha256 "8204d228ecbe5f744d625c90364808616127471581227415bca18857af981369"
 #   end
 
-  resource "geoip_module" do
-    url "https://github.com/valet-sh/php-geoip/releases/download/1.1.1/geoip-1.1.1.tar.gz"
-    sha256 "33280eb74a4ea4cbc1a3867f8fd0f633f9de2d19043d4825bf57863d0c5e20e7"
-  end
+#   resource "geoip_module" do
+#     url "https://github.com/valet-sh/php-geoip/releases/download/1.1.1/geoip-1.1.1.tar.gz"
+#     sha256 "33280eb74a4ea4cbc1a3867f8fd0f633f9de2d19043d4825bf57863d0c5e20e7"
+#   end
 
   def install
     if OS.mac? && (MacOS.version == :el_capitan || MacOS.version == :sierra)
@@ -250,14 +250,14 @@ class VshPhp56 < Formula
 #       system "make", "all"
 #       system "make", "install"
 #     }
-
-    resource("geoip_module").stage {
-      system "#{bin}/phpize#{bin_suffix}"
-      system "./configure", "--with-php-config=#{bin}/php-config#{bin_suffix}"
-      system "make", "clean"
-      system "make", "all"
-      system "make", "install"
-    }
+#
+#     resource("geoip_module").stage {
+#       system "#{bin}/phpize#{bin_suffix}"
+#       system "./configure", "--with-php-config=#{bin}/php-config#{bin_suffix}"
+#       system "make", "clean"
+#       system "make", "all"
+#       system "make", "install"
+#     }
 
     # Allow pecl to install outside of Cellar
     extension_dir = Utils.safe_popen_read("#{bin}/php-config", "--extension-dir").chomp
