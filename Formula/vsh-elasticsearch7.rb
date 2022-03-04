@@ -16,7 +16,7 @@ desc "Distributed search & analytics engine"
 
     inreplace libexec/"bin/elasticsearch-env",
               "if [ -z \"$ES_PATH_CONF\" ]; then ES_PATH_CONF=\"$ES_HOME\"/config; fi",
-              "if [ -z \"$ES_PATH_CONF\" ]; then ES_PATH_CONF=\"#{etc}/elasticsearch\"; fi"
+              "if [ -z \"$ES_PATH_CONF\" ]; then ES_PATH_CONF=\"#{etc}/#{name}\"; fi"
 
     # Set up Elasticsearch for local development:
     inreplace "#{libexec}/config/elasticsearch.yml" do |s|
@@ -105,8 +105,8 @@ desc "Distributed search & analytics engine"
     server.close
 
     mkdir testpath/"config"
-    cp etc/"elasticsearch/jvm.options", testpath/"config"
-    cp etc/"elasticsearch/log4j2.properties", testpath/"config"
+    cp etc/"#{name}/jvm.options", testpath/"config"
+    cp etc/"#{name}/log4j2.properties", testpath/"config"
     touch testpath/"config/elasticsearch.yml"
 
     ENV["ES_PATH_CONF"] = testpath/"config"
